@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 import 'package:weather/service.dart';
 
 import 'component/forecast.dart';
@@ -15,22 +14,92 @@ class WheatherApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        backgroundColor: const Color(0xFF255AF4),
-        body: Expanded(
-          child: FutureBuilder<Map<String, dynamic>>(
-              future: getWeather(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                    ),
-                  );
-                }
+    int getBackgroundColor(String condition, DateTime date) {
+      int color;
+      bool validateHour = date.hour > 6 && date.hour < 18;
+      switch (condition.toLowerCase()) {
+        case "chuva":
+          color = validateHour ? 0xFF575F7C : 0xFF343538;
+          break;
 
-                return Column(
+        case "céu aberto":
+        default:
+          color = validateHour ? 0xFF255AF4 : 0xFF061034;
+          break;
+      }
+
+      return color;
+    }
+
+    String getWeatherImage(String index) {
+      String image;
+
+      switch (index) {
+        case "1":
+        case "1n":
+          image = "sol";
+          break;
+
+        case "2":
+        case "2n":
+        case "4":
+        case "4n":
+          image = "parcialmente_nublado";
+          break;
+
+        case "2r":
+        case "2rn":
+        case "3":
+        case "3n":
+        case "7":
+        case "7n":
+        case "8":
+        case "9":
+          image = "nublado";
+          break;
+
+        case "4r":
+        case "4rn":
+        case "4t":
+        case "4tn":
+        case "5":
+        case "5n":
+        case "6":
+        case "6n":
+          image = "chuva";
+          break;
+
+        default:
+          image = "nublado";
+      }
+
+      return "images/$image.png";
+    }
+
+    return MaterialApp(
+      home: FutureBuilder<Map<String, dynamic>>(
+          future: getWeather(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Scaffold(
+                backgroundColor: Color(0xFF255AF4),
+                body: Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            }
+
+            return Scaffold(
+              backgroundColor: Color(getBackgroundColor(
+                snapshot.data!["data"]["condition"],
+                DateTime.parse(
+                  snapshot.data!["data"]["date"],
+                ),
+              )),
+              body: Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -46,7 +115,7 @@ class WheatherApp extends StatelessWidget {
                     Column(
                       children: [
                         Image.asset(
-                          'images/sol.png',
+                          getWeatherImage(snapshot.data!["data"]["icon"]),
                           height: 96,
                           width: 96,
                         ),
@@ -231,10 +300,10 @@ class WheatherApp extends StatelessWidget {
                       ),
                     ),
                   ],
-                );
-              }),
-        ),
-      ),
+                ),
+              ),
+            );
+          }),
     );
   }
 }
